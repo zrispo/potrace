@@ -179,6 +179,8 @@ var Potrace = (function() {
       var alphaThreshold = 150;
       if(imgdataobj.data[i+3] < alphaThreshold) {
         bm.data[j] = 0;
+      } else {
+        bm.data[j] = 1;
       }
     }
     info.isReady = true;
