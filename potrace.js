@@ -1,5 +1,7 @@
 /* 
  * A javascript port of Potrace (http://potrace.sourceforge.net).
+ *  
+ * This is a fork of potrace.js with some modifications (see comments with zrispo). 
  * 
  * Licensed under the GPL
  * 
@@ -26,7 +28,7 @@
  *   process(callback) : wait for the image be loaded, then run potrace algorithm,
  *                       then call callback function.
  * 
- *   getSVG(size, opt_type) : return a string of generated SVG image.
+ *   getSVG: getSVG(size, opt_type) : return a string of generated SVG image.
  *                                    result_image_size = original_image_size * size
  *                                    optional parameter opt_type can be "curve"
  */
@@ -119,6 +121,16 @@ var Potrace = (function() {
     loadBm();
   };
 
+  // zrispo - 
+  // Added this method so we don't have to convert a dataURL to a File to pass it to potrace.js.
+  function loadImageFromDataURL(src) {
+    if (info.isReady) {
+      clear();
+    }
+    imgElement.src = src;
+    imgElement.onload();
+  }
+
   function loadImageFromFile(file) {
     if (info.isReady) {
       clear();
@@ -163,9 +175,11 @@ var Potrace = (function() {
     var imgdataobj = ctx.getImageData(0, 0, bm.w, bm.h);
     var l = imgdataobj.data.length, i, j, color;
     for (i = 0, j = 0; i < l; i += 4, j++) {
-      color = 0.2126 * imgdataobj.data[i] + 0.7153 * imgdataobj.data[i + 1] +
-          0.0721 * imgdataobj.data[i + 2];
-      bm.data[j] = (color < 128 ? 1 : 0);
+      // zrispo - transparency lower that a certain threshold sets color to 0.
+      var alphaThreshold = 150;
+      if(imgdataobj.data[i+3] < alphaThreshold) {
+        bm.data[j] = 0;
+      }
     }
     info.isReady = true;
   }
@@ -1213,6 +1227,7 @@ var Potrace = (function() {
   }
 
   function process(c) {
+
     if (c) {
       callback = c;
     }
@@ -1293,6 +1308,7 @@ var Potrace = (function() {
   }
   
   return{
+    loadImageFromDataURL: loadImageFromDataURL, // zrispo 
     loadImageFromFile: loadImageFromFile,
     loadImageFromUrl: loadImageFromUrl,
     setParameter: setParameter,
